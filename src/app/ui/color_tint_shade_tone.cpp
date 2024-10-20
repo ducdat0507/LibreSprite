@@ -12,6 +12,7 @@
 #include "app/ui/color_tint_shade_tone.h"
 
 #include "app/color_utils.h"
+#include "app/modules/gfx.h"
 #include "app/ui/skin/skin_theme.h"
 #include "app/ui/status_bar.h"
 #include "she/surface.h"
@@ -29,7 +30,7 @@ using namespace gfx;
 using namespace ui;
 
 ColorTintShadeTone::ColorTintShadeTone()
-  : m_capturedInHue(false)
+  : m_capturedBar(CapturedBar::NONE)
 {
   setBorder(gfx::Border(3*ui::guiscale()));
 }
@@ -41,33 +42,42 @@ app::Color ColorTintShadeTone::getColorByPosition(const gfx::Point& pos)
     return app::Color::fromMask();
 
   int u, v, umax, vmax;
-  int huebar = getHueBarSize();
+  int huebar = getBarsSize();
   u = pos.x - rc.x;
   v = pos.y - rc.y;
   umax = MAX(1, rc.w-1);
   vmax = MAX(1, rc.h-1-huebar);
 
   double hue, sat, val;
+  int alpha;
 
-  bool inHue =
-    (( hasCapture() && m_capturedInHue) ||
-     (!hasCapture() && inHueBarArea(pos)));
+  bool inHue = hasCapture() ? m_capturedBar == CapturedBar::HUE_BAR : inHueBarArea(pos);
+  bool inAlpha = hasCapture() ? m_capturedBar == CapturedBar::ALPHA_BAR : inAlphaBarArea(pos);
 
   if (inHue) {
     hue = (360.0 * u / umax);
     sat = m_color.getSaturation();
     val = m_color.getValue();
+    alpha = m_color.getAlpha();
+  }
+  else if (inAlpha) {
+    hue = m_color.getHue();
+    sat = m_color.getSaturation();
+    val = m_color.getValue();
+    alpha = (255 * u / umax);
   }
   else {
     hue = m_color.getHue();
     sat = (100.0 * u / umax);
-    val = (100.0 - 100.0 * v / vmax);
+    val = 100.0 - (100.0 * v / vmax);
+    alpha = m_color.getAlpha();
   }
 
   return app::Color::fromHsv(
     MID(0.0, hue, 360.0),
     MID(0.0, sat, 100.0),
-    MID(0.0, val, 100.0));
+    MID(0.0, val, 100.0),
+    MID(0, alpha, 255));
 }
 
 void ColorTintShadeTone::onPaint(ui::PaintEvent& ev)
@@ -82,14 +92,17 @@ void ColorTintShadeTone::onPaint(ui::PaintEvent& ev)
   gfx::Rect rc = clientChildrenBounds();
   if (rc.isEmpty())
     return;
+    
+  int barcount = getBarsCount();
+  int barsize = getOneBarSize();
+  int baroffset = barcount * barsize;
 
   double hue = m_color.getHue();
   int umax, vmax;
-  int huebar = getHueBarSize();
   umax = MAX(1, rc.w-1);
-  vmax = MAX(1, rc.h-1-huebar);
+  vmax = MAX(1, rc.h-1-baroffset);
 
-  for (int y=0; y<rc.h-huebar; ++y) {
+  for (int y=0; y<rc.h-baroffset; ++y) {
     for (int x=0; x<rc.w; ++x) {
       double sat = (100.0 * x / umax);
       double val = (100.0 - 100.0 * y / vmax);
@@ -104,39 +117,62 @@ void ColorTintShadeTone::onPaint(ui::PaintEvent& ev)
     }
   }
 
-  if (huebar > 0) {
-    for (int y=rc.h-huebar; y<rc.h; ++y) {
+  if (barcount > 0) {
+    for (int y=0; y<barsize; ++y) {
       for (int x=0; x<rc.w; ++x) {
         gfx::Color color = color_utils::color_for_ui(
           app::Color::fromHsv(
-            (360.0 * x / rc.w), 100.0, 100.0));
+            (360.0 * x / rc.w),
+            100.0,
+            100.0
+          ));
 
-        g->putPixel(color, rc.x+x, rc.y+y);
+        g->putPixel(color, rc.x+x, rc.y+rc.h-baroffset+y);
       }
     }
+  }
+
+  if (barcount > 1) {
+    Rect gridrect = RectT(rc.x, rc.y+rc.h-baroffset+barsize, rc.w, barsize);
+    draw_alpha_picker(g, gridrect, m_color);
   }
 
   if (m_color.getType() != app::Color::MaskType) {
     double sat = m_color.getSaturation();
     double val = m_color.getValue();
+    double alpha = m_color.getAlpha();
+    double luma = m_color.getLuma();
     gfx::Point pos(rc.x + int(sat * rc.w / 100.0),
-                   rc.y + int((100.0-val) * (rc.h-huebar) / 100.0));
+                   rc.y + int((100.0-val) * (rc.h-baroffset) / 100.0));
 
-    she::Surface* icon = theme->parts.colorWheelIndicator()->bitmap(0);
+    she::Surface* wheel = theme->parts.colorWheelIndicator()->bitmap(0);
+    she::Surface* line = theme->parts.colorLineIndicator()->bitmap(0);
+
     g->drawColoredRgbaSurface(
-      icon,
-      val > 50.0 ? gfx::rgba(0, 0, 0): gfx::rgba(255, 255, 255),
-      pos.x-icon->width()/2,
-      pos.y-icon->height()/2);
+      wheel,
+      luma > 50.0 ? gfx::rgba(0, 0, 0) : gfx::rgba(255, 255, 255),
+      pos.x-wheel->width()/2,
+      pos.y-wheel->height()/2);
 
-    if (huebar > 0) {
+    if (barcount > 0) {
       pos.x = rc.x + int(rc.w * hue / 360.0);
-      pos.y = rc.y + rc.h - huebar/2;
+      pos.y = rc.y + rc.h - baroffset + barsize/2;
+      app::Color color = app::Color::fromHsv(hue, 100.0, 100.0);
       g->drawColoredRgbaSurface(
-        icon,
-        gfx::rgba(0, 0, 0),
-        pos.x-icon->width()/2,
-        pos.y-icon->height()/2);
+        line,
+        color.getLuma() > 50.0 ? gfx::rgba(0, 0, 0) : gfx::rgba(255, 255, 255),
+        pos.x-line->width()/2,
+        pos.y-line->height()/2);
+    }
+
+    if (barcount > 1) {
+      pos.x = rc.x + int(rc.w * alpha / 255.0);
+      pos.y = rc.y + rc.h - baroffset + 3*barsize/2;
+      g->drawColoredRgbaSurface(
+        line,
+        m_color.getLuma() > 50.0 ? gfx::rgba(0, 0, 0) : gfx::rgba(255, 255, 255),
+        pos.x-line->width()/2,
+        pos.y-line->height()/2);
     }
   }
 }
@@ -156,8 +192,14 @@ bool ColorTintShadeTone::onProcessMessage(ui::Message* msg)
     case kMouseMoveMessage: {
       MouseMessage* mouseMsg = static_cast<MouseMessage*>(msg);
 
-      if (msg->type() == kMouseDownMessage)
-          m_capturedInHue = inHueBarArea(mouseMsg->position());
+      if (msg->type() == kMouseDownMessage) {
+        if (inHueBarArea(mouseMsg->position())) 
+          m_capturedBar = CapturedBar::HUE_BAR;
+        else if (inAlphaBarArea(mouseMsg->position())) 
+          m_capturedBar = CapturedBar::ALPHA_BAR;
+        else 
+          m_capturedBar = CapturedBar::NONE;
+      }
 
       app::Color color = getColorByPosition(mouseMsg->position());
       if (color != app::Color::fromMask()) {
@@ -191,17 +233,44 @@ bool ColorTintShadeTone::onProcessMessage(ui::Message* msg)
 bool ColorTintShadeTone::inHueBarArea(const gfx::Point& pos) const
 {
   gfx::Rect rc = childrenBounds();
+  int barsize = getOneBarSize();
+  int baroffset = barsize * getBarsCount();
   if (rc.isEmpty() || !rc.contains(pos))
     return false;
-  else
-    return (pos.y >= rc.y+rc.h-getHueBarSize());
+  else {
+    int offset = rc.y + rc.h - baroffset;
+    return (pos.y >= offset && pos.y < offset+barsize);
+  }
 }
 
-int ColorTintShadeTone::getHueBarSize() const
+bool ColorTintShadeTone::inAlphaBarArea(const gfx::Point& pos) const
+{
+  gfx::Rect rc = childrenBounds();
+  int barsize = getOneBarSize();
+  int baroffset = barsize * getBarsCount();
+  if (rc.isEmpty() || !rc.contains(pos))
+    return false;
+  else {
+    int offset = rc.y + rc.h - baroffset + barsize;
+    return (pos.y >= offset && pos.y < offset+barsize);
+  }
+}
+
+int ColorTintShadeTone::getOneBarSize() const
+{
+  return 8*guiscale();
+}
+
+int ColorTintShadeTone::getBarsCount() const
 {
   gfx::Rect rc = clientChildrenBounds();
-  int size = 8*guiscale();
-  return rc.h < 2*size ? 0: size;
+  int onesize = getOneBarSize();
+  return MID(0, rc.h / onesize / 2 - 1, 2);
+}
+
+int ColorTintShadeTone::getBarsSize() const
+{
+  return getBarsCount() * getOneBarSize();
 }
 
 } // namespace app

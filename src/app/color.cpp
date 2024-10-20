@@ -580,6 +580,40 @@ double Color::getValue() const
   return -1.0;
 }
 
+double Color::getLuma() const
+{
+  switch (getType()) {
+
+    case Color::MaskType:
+      return 0.0;
+
+    case Color::RgbType:
+      return 100.0 * rgb_luma(m_value.rgb.r, m_value.rgb.g, m_value.rgb.b) / 255.0;
+
+    case Color::HsvType: {
+      gfx::Rgb rgb = Rgb(Hsv(m_value.hsv.h, m_value.hsv.s / 100.0, m_value.hsv.v / 100.0));
+      return 100.0 * rgb_luma(rgb.red(), rgb.green(), rgb.blue()) / 255.0;
+    }
+
+    case Color::GrayType:
+      return 100.0 * m_value.gray.g / 255.0;
+
+    case Color::IndexType: {
+      int i = m_value.index;
+      if (i >= 0 && i < get_current_palette()->size()) {
+        uint32_t c = get_current_palette()->getEntry(i);
+        return 100.0 * rgba_luma(c) / 255.0;
+      }
+      else
+        return 0.0;
+    }
+
+  }
+
+  ASSERT(false);
+  return -1.0;
+}
+
 int Color::getGray() const
 {
   switch (getType()) {

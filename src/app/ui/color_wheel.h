@@ -43,7 +43,13 @@ namespace app {
     void setHarmony(Harmony harmony);
 
   private:
-    app::Color getColorInClientPos(const gfx::Point& pos);
+    enum CapturedBar {
+      NONE = 0,
+      VALUE_BAR = 1,
+      ALPHA_BAR = 2,
+    };
+
+    app::Color getWheelColor(const gfx::Point& pos);
     void onResize(ui::ResizeEvent& ev) override;
     void onPaint(ui::PaintEvent& ev) override;
     bool onProcessMessage(ui::Message* msg) override;
@@ -55,6 +61,14 @@ namespace app {
     // With dir == +1, the angle is from the color model and it's converted to HSV hue.
     // With dir == -1, the angle came from HSV and is converted to the current color model.
     int convertHueAngle(int angle, int dir) const;
+
+    bool inValueBarArea(const gfx::Point& pos) const;
+    bool inAlphaBarArea(const gfx::Point& pos) const;
+    int getOneBarSize() const;
+    int getBarsCount() const;
+    int getBarsSize() const;
+
+    int m_capturedBar;
 
     gfx::Rect m_clientBounds;
     gfx::Rect m_wheelBounds;

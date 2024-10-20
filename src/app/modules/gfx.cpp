@@ -122,7 +122,7 @@ void draw_color_button(ui::Graphics* g,
              Rect(rc.x+1*scale,
                   rc.y+1*scale,
                   rc.w-2*scale,
-                  rc.h-2*scale),
+                  rc.h-3*scale),
              color,
              colorMode);
 
@@ -143,6 +143,28 @@ void draw_color_button(ui::Graphics* g,
     theme->drawRect(
       g, gfx::Rect(rc.x, rc.y, rc.w, rc.h-1 - 1*scale),
       theme->parts.colorbarBorderHotfg().get());
+  }
+}
+
+void draw_alpha_picker(ui::Graphics* g,
+                const Rect& rc,
+                const app::Color& _color)
+{
+  if (rc.w < 1 || rc.h < 1)
+    return;
+
+  rectgrid(g, rc, gfx::Size(rc.h/2, rc.h/2));
+
+  for (int x=0; x<rc.w; ++x) {
+    gfx::Color color = color_utils::color_for_ui(
+      app::Color::fromHsv(
+        _color.getHue(),
+        _color.getSaturation(),
+        _color.getValue(),
+        255 * x / rc.w
+    ));
+
+    g->drawVLine(color, rc.x + x, rc.y, rc.h);
   }
 }
 

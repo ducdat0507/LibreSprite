@@ -23,13 +23,22 @@ namespace app {
     bool onProcessMessage(ui::Message* msg) override;
 
   private:
+    enum CapturedBar {
+      NONE = 0,
+      HUE_BAR = 1,
+      ALPHA_BAR = 2,
+    };
+
     bool inHueBarArea(const gfx::Point& pos) const;
-    int getHueBarSize() const;
+    bool inAlphaBarArea(const gfx::Point& pos) const;
+    int getOneBarSize() const;
+    int getBarsCount() const;
+    int getBarsSize() const;
 
     // True when the user pressed the mouse button in the hue slider.
     // It's used to avoid swapping in both areas (tint/shades/tones
     // area vs hue slider) when we drag the mouse above this widget.
-    bool m_capturedInHue;
+    int m_capturedBar;
   };
 
 } // namespace app

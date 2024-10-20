@@ -29,4 +29,8 @@ namespace app {
                          const bool hot,
                          const bool drag);
 
+  void draw_alpha_picker(ui::Graphics* g,
+                         const gfx::Rect& rc,
+                         const app::Color& color);
+
 } // namespace app

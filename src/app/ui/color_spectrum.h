@@ -22,6 +22,23 @@ namespace app {
   protected:
     void onPaint(ui::PaintEvent& ev) override;
     bool onProcessMessage(ui::Message* msg) override;
+
+  private: 
+    double m_lastSaturation;
+
+    enum CapturedBar {
+      NONE = 0,
+      SATURATION_BAR = 1,
+      ALPHA_BAR = 2,
+    };
+
+    bool inSaturationBarArea(const gfx::Point& pos) const;
+    bool inAlphaBarArea(const gfx::Point& pos) const;
+    int getOneBarSize() const;
+    int getBarsCount() const;
+    int getBarsSize() const;
+
+    int m_capturedBar;
   };
 
 } // namespace app

@@ -10,6 +10,7 @@
 #endif
 
 #include "app/color_utils.h"
+#include "app/modules/gfx.h"
 #include "app/ui/color_sliders.h"
 #include "app/ui/skin/skin_slider_property.h"
 #include "app/ui/skin/skin_theme.h"
@@ -47,6 +48,11 @@ namespace {
     void paint(Slider* slider, Graphics* g, const gfx::Rect& rc) {
       gfx::Color color = gfx::ColorNone;
       int w = MAX(rc.w-1, 1);
+
+      if (m_channel == ColorSliders::Alpha) {
+        draw_alpha_picker(g, rc, m_color);
+        return;
+      }
 
       for (int x=0; x <= w; ++x) {
         switch (m_channel) {

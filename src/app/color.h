@@ -70,6 +70,7 @@ namespace app {
     double getHue() const;
     double getSaturation() const;
     double getValue() const;
+    double getLuma() const;
     int getGray() const;
     int getIndex() const;
     int getAlpha() const;
