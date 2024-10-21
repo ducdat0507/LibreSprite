@@ -33,6 +33,7 @@
 #include "doc/layer.h"
 #include "doc/primitives.h"
 #include "doc/site.h"
+#include "ui/theme.h"
 
 namespace app {
 
@@ -360,8 +361,15 @@ void BrushPreview::forEachBrushPixel(
 
   // Depending on the editor zoom, maybe we need subpixel movement (a
   // little dot inside the active pixel)
-  if (m_editor->zoom().scale() >= 4.0)
-    (this->*pixelDelegate)(g, screenPos, color);
+  if (m_editor->zoom().scale() >= 4.0) {
+    int scale = ui::guiscale();
+    int x, y;
+    for (y=0; y<scale; y++) {
+      for (x=0; x<scale; x++) {
+        (this->*pixelDelegate)(g, screenPos + gfx::Point(x, y), color);
+      }
+    }
+  }
 
   m_savedPixelsLimit = m_savedPixelsIterator;
 }
@@ -371,23 +379,26 @@ void BrushPreview::traceCrossPixels(
   const gfx::Point& pt, gfx::Color color,
   PixelDelegate pixelDelegate)
 {
-  static int cross[7*7] = {
-    0, 0, 0, 1, 0, 0, 0,
-    0, 0, 0, 1, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0,
-    1, 1, 0, 0, 0, 1, 1,
-    0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 1, 0, 0, 0,
-    0, 0, 0, 1, 0, 0, 0,
+  static int cross[9*9] = {
+    0, 0, 0, 0, 1, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 1, 0, 0, 0, 1, 1, 1,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 0, 0, 0,
   };
   gfx::Point out;
   int u, v;
+  int scale = ui::guiscale();
 
-  for (v=0; v<7; v++) {
-    for (u=0; u<7; u++) {
-      if (cross[v*7+u]) {
-        out.x = pt.x-3+u;
-        out.y = pt.y-3+v;
+  for (v=0; v<9*scale; v++) {
+    for (u=0; u<9*scale; u++) {
+      if (cross[v/scale*9+u/scale]) {
+        out.x = pt.x-4*scale+u;
+        out.y = pt.y-4*scale+v;
         (this->*pixelDelegate)(g, out, color);
       }
     }
@@ -441,24 +452,28 @@ void BrushPreview::traceBrushBoundaries(ui::Graphics* g,
   pos.x -= m_brushWidth/2;
   pos.y -= m_brushHeight/2;
 
+  int scale = ui::guiscale();
+
   for (const auto& seg : *m_brushBoundaries) {
     gfx::Rect bounds = seg.bounds();
     bounds.offset(pos);
     bounds = m_editor->editorToScreen(bounds);
 
     if (seg.open()) {
-      if (seg.vertical()) --bounds.x;
-      else --bounds.y;
+      if (seg.vertical()) bounds.x -= scale;
+      else bounds.y -= scale;
     }
 
     gfx::Point pt(bounds.x, bounds.y);
     if (seg.vertical()) {
-      for (; pt.y<bounds.y+bounds.h; ++pt.y)
-        (this->*pixelDelegate)(g, pt, color);
+      for (; pt.x<bounds.x+scale; ++pt.x)
+        for (pt.y = bounds.y; pt.y<bounds.y+bounds.h; ++pt.y)
+          (this->*pixelDelegate)(g, pt, color);
     }
     else {
-      for (; pt.x<bounds.x+bounds.w; ++pt.x)
-        (this->*pixelDelegate)(g, pt, color);
+      for (; pt.y<bounds.y+scale; ++pt.y)
+        for (pt.x = bounds.x; pt.x<bounds.x+bounds.w; ++pt.x)
+          (this->*pixelDelegate)(g, pt, color);
     }
   }
 }
