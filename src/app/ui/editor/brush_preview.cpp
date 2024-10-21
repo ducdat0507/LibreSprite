@@ -423,18 +423,22 @@ void BrushPreview::traceSelectionCrossPixels(
   };
   gfx::Point out, outpt = m_editor->editorToScreen(pt);
   int u, v;
+  int scale = ui::guiscale();
   int size = m_editor->zoom().apply(thickness/2);
   int size2 = m_editor->zoom().apply(thickness);
   if (size2 == 0) size2 = 1;
 
-  for (v=0; v<6; v++) {
-    for (u=0; u<6; u++) {
-      if (!cross[v*6+u])
+  int full = 6*scale;
+  int half = 3*scale;
+
+  for (v=0; v<full; v++) {
+    for (u=0; u<full; u++) {
+      if (!cross[v/scale*6+u/scale])
         continue;
 
       out = outpt;
-      out.x += ((u<3) ? u-size-3: u-size-3+size2);
-      out.y += ((v<3) ? v-size-3: v-size-3+size2);
+      out.x += ((u<half) ? u-size-half: u-size-half+size2);
+      out.y += ((v<half) ? v-size-half: v-size-half+size2);
 
       (this->*pixelDelegate)(g, out, color);
     }
