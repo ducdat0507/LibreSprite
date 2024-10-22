@@ -416,11 +416,13 @@ void ToolBar::openPopupWindow(int group_index, ToolGroup* tool_group)
   for (ToolIterator it = toolbox->begin(); it != toolbox->end(); ++it) {
     Tool* tool = *it;
     if (tool->getGroup() == tool_group)
-      w += bounds().w-border().width()-1;
+      w += bounds().w-border().width()-guiscale();
   }
-
-  rc.x -= w;
-  rc.w = w;
+    
+  bool left = Preferences::instance().general.leftToolBar();
+  if (left) rc.x += bounds().w - 3 * guiscale();
+  else rc.x -= w;
+  rc.w = w + guiscale();
 
   // Set hotregion of popup window
   Region rgn(gfx::Rect(rc).enlarge(16*guiscale()));
@@ -477,7 +479,7 @@ Point ToolBar::getToolPositionInGroup(int group_index, Tool* tool)
     }
   }
 
-  return Point(iconsize.w/2+iconsize.w*nth, iconsize.h);
+  return Point(iconsize.w/2+(iconsize.w-guiscale())*nth, iconsize.h);
 }
 
 void ToolBar::openTipWindow(ToolGroup* tool_group, Tool* tool)
@@ -516,13 +518,17 @@ void ToolBar::openTipWindow(int group_index, Tool* tool)
 
   m_tipWindow = new TipWindow(tooltip);
   m_tipWindow->remapWindow();
+    
+  bool left = Preferences::instance().general.leftToolBar();
 
   Rect toolrc = getToolGroupBounds(group_index);
   Point arrow = (tool ? getToolPositionInGroup(group_index, tool): Point(0, 0));
-  if (tool && m_popupWindow && m_popupWindow->isVisible())
-    toolrc.x += arrow.x - m_popupWindow->bounds().w;
+  if (tool && m_popupWindow && m_popupWindow->isVisible()) {
+    toolrc.x += arrow.x;
+    if (!left) toolrc.x -= m_popupWindow->bounds().w;
+  }
 
-  m_tipWindow->pointAt(TOP | RIGHT, toolrc);
+  m_tipWindow->pointAt(TOP | (left ? LEFT : RIGHT), toolrc);
 
   if (m_tipOpened)
     m_tipWindow->openWindow();
@@ -713,8 +719,8 @@ void ToolBar::ToolStrip::onPaint(PaintEvent& ev)
       if (icon) {
         g->drawRgbaSurface(
           icon,
-          toolrc.x+toolrc.w/2-icon->width()/2,
-          toolrc.y+toolrc.h/2-icon->height()/2);
+          toolrc.x+(toolrc.w-icon->width())/2,
+          toolrc.y+(toolrc.h-icon->height())/2);
       }
     }
   }
@@ -725,7 +731,7 @@ Rect ToolBar::ToolStrip::getToolBounds(int index)
   const Rect& bounds(this->bounds());
   Size iconsize = getToolIconSize(this);
 
-  return Rect(bounds.x+index*(iconsize.w-1), bounds.y,
+  return Rect(bounds.x+index*(iconsize.w-guiscale()), bounds.y,
               iconsize.w, bounds.h);
 }
 
