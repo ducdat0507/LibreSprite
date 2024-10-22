@@ -22,7 +22,7 @@
 
   <colors>
     <color id="text" value="#afafaf" />
-    <color id="disabled" value="#8c8c8c" />
+    <color id="disabled" value="#696969" />
     <color id="face" value="#535353" />
     <color id="hot_face" value="#faf0e6" />
     <color id="selected" value="#FFFFFF" />
@@ -34,9 +34,9 @@
     <color id="entry_suffix" value="#8c8c8c" />
     <color id="link_text" value="#FFFFFF" />
     <color id="link_hover" value="#FFFFFF" />
-    <color id="button_normal_text" value="#000000" />
+    <color id="button_normal_text" value="#afafaf" />
     <color id="button_normal_face" value="#464646" />
-    <color id="button_hot_text" value="#000000" />
+    <color id="button_hot_text" value="#afafaf" />
     <color id="button_hot_face" value="#6b6b6b" />
     <color id="button_selected_text" value="#FFFFFF" />
     <color id="button_selected_face" value="#212121" />
@@ -65,7 +65,7 @@
     <color id="slider_empty_face" value="#3d3d3d" />
     <color id="slider_full_text" value="#FFFFFF" />
     <color id="slider_full_face" value="#1f1f1f" />
-    <color id="tab_normal_text" value="#000000" />
+    <color id="tab_normal_text" value="#afafaf" />
     <color id="tab_normal_face" value="#464646" />
     <color id="tab_active_text" value="#FFFFFF" />
     <color id="tab_active_face" value="#1f1f1f" />
@@ -87,9 +87,9 @@
     <color id="workspace_link" value="#afafaf" />
     <color id="workspace_link_hover" value="#FFFFFF" />
     <color id="timeline_normal" value="#464646" />
-    <color id="timeline_normal_text" value="#000000" />
+    <color id="timeline_normal_text" value="#afafaf" />
     <color id="timeline_hover" value="#646464" />
-    <color id="timeline_hover_text" value="#000000" />
+    <color id="timeline_hover_text" value="#afafaf" />
     <color id="timeline_active" value="#1f1f1f" />
     <color id="timeline_active_text" value="#FFFFFF" />
     <color id="timeline_active_hover" value="#3a3a3a" />
