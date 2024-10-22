@@ -361,8 +361,8 @@ void BrushPreview::forEachBrushPixel(
 
   // Depending on the editor zoom, maybe we need subpixel movement (a
   // little dot inside the active pixel)
-  if (m_editor->zoom().scale() >= 4.0) {
-    int scale = ui::guiscale();
+  int scale = ui::guiscale();
+  if (m_editor->zoom().scale() >= 4.0 * scale) {
     int x, y;
     for (y=0; y<scale; y++) {
       for (x=0; x<scale; x++) {
