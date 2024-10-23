@@ -151,9 +151,13 @@ public:
     // Scope
     gridScope()->addItem("Global");
     if (context->activeDocument()) {
-      gridScope()->addItem("Current Document");
-      gridScope()->setSelectedItemIndex(1);
-      gridScope()->Change.connect(base::Bind<void>(&OptionsWindow::onChangeGridScope, this));
+    gridScope()->addItem("Current Document");
+      gridScope()->setSelectedItem(1);
+      gridScope()->ItemChange.connect(base::Bind<void>(&OptionsWindow::onChangeGridScope, this));
+    } else {
+      // Add 1px border to the right to offset grid padding
+      gridScope()->addItem("");
+      gridScope()->getItem(1)->setMaxSize(gfx::Size(guiscale(), 1000));
     }
 
     // Language
@@ -363,7 +367,7 @@ private:
   }
 
   void onChangeGridScope() {
-    int item = gridScope()->getSelectedItemIndex();
+    int item = gridScope()->selectedItem();
 
     switch (item) {
       case 0: m_curPref = &m_globPref; break;

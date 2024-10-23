@@ -121,7 +121,10 @@
 
         <!-- Grid & background -->
         <vbox id="section_grid">
-          <combobox id="grid_scope" />
+	        <hbox>
+            <label text="Scope:" />
+            <buttonset columns="2" id="grid_scope"></buttonset>
+          </hbox>
           <separator text="Grid" horizontal="true" />
           <grid columns="3">
             <label text="Grid Color:" />
