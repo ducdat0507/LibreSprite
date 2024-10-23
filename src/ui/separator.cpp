@@ -45,7 +45,7 @@ void Separator::onSizeHint(SizeHintEvent& ev)
   }
 
   if (hasText()) {
-    maxSize.w = MAX(maxSize.w, textWidth());
+    maxSize.w = MAX(maxSize.w, textWidth() + 6 * guiscale());
     maxSize.h = MAX(maxSize.h, textHeight());
   }
 
