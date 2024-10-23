@@ -27,9 +27,10 @@
 #define VERSION "1.2-dev"
 #define PACKAGE_AND_VERSION PACKAGE " " VERSION
 
-#define WEBSITE                 "https://github.com/LibreSprite/LibreSprite/"
-#define WEBSITE_DOWNLOAD        WEBSITE "releases/"
-#define WEBSITE_CONTRIBUTORS    WEBSITE "graphs/contributors/"
+#define WEBSITE                 "https://libresprite.github.io/"
+#define WEBSITE_REPO            "https://github.com/LibreSprite/LibreSprite/"
+#define WEBSITE_DOWNLOAD        WEBSITE_REPO "releases/"
+#define WEBSITE_CONTRIBUTORS    WEBSITE_REPO "graphs/contributors/"
 #define COPYRIGHT               "Copyright (C) 2001-2016 David Capello, 2016-2024 LibreSprite contributors"
 
 #include "base/base.h"

@@ -1,4 +1,5 @@
 {
+ "A {0:free and open source} fork of {1:Aseprite}": "{1:Aseprite}の{0:無料かつオープンソース}フォーク",
  "180": "180度(&1)",
  "*\n        Left-button: Erase with the background color in `Background' layer\n\n        or transparent color in any other layer.\n*\n        Right-button: Replace foreground with background color.\n        ": "*\n        左ボタン: `背景'レイヤーで背景色を使って消去\n\n        または他のレイヤーで透明色を使用。\n*\n        右ボタン: 前景色を背景色に置き換え。\n        ",
  "*\n        Left-button: Replace/add to current selection.\n*\n        Right-button: Remove from current selection.\n        ": "*\n        左ボタン: 現在の選択に置き換える/追加。\n*\n        右ボタン: 現在の選択から削除。\n        ",

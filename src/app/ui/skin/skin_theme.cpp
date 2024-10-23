@@ -1383,6 +1383,7 @@ void SkinTheme::paintLinkLabel(PaintEvent& ev)
   if (widget->isSelected()) state += Style::clicked();
 
   g->fillRect(bg, bounds);
+  bounds.shrink(widget->border());
   style->paint(g, bounds, widget->text().c_str(), state);
 }
 
@@ -1602,10 +1603,18 @@ void SkinTheme::paintSeparator(ui::PaintEvent& ev)
   // text
   if (widget->hasText()) {
     int h = widget->textHeight();
+    int p = 3 * guiscale();
     Rect r(
       bounds.x + widget->border().left()/2 + h/2,
       bounds.y + bounds.h/2 - h/2,
       widget->textWidth(), h);
+
+    r.w += p * 2;
+
+    g->fillRect(BGCOLOR, r);
+
+    r.w -= p * 2;
+    r.x += p;
 
     drawTextString(g, NULL,
       colors.separatorLabel(), BGCOLOR,

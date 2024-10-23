@@ -11,8 +11,11 @@
 
 #include "app/commands/command.h"
 #include "app/modules/gui.h"
+#include "app/modules/i18n.h"
 #include "base/bind.h"
 #include "ui/ui.h"
+
+#include <cstdio>
 
 namespace app {
 
@@ -25,6 +28,9 @@ public:
 
 protected:
   void onExecute(Context* context) override;
+
+private: 
+  Box* makeTextStrip(const std::string &directive, const std::vector<std::string> &links);
 };
 
 AboutCommand::AboutCommand()
@@ -37,58 +43,65 @@ AboutCommand::AboutCommand()
 void AboutCommand::onExecute(Context* context)
 {
   std::unique_ptr<Window> window(new Window(Window::WithTitleBar, "About " PACKAGE));
+
   Box* box1 = new Box(VERTICAL);
+  window->addChild(box1);
+
   Grid* grid = new Grid(2, false);
+  box1->addChild(grid);
+  
   Label* title = new Label(PACKAGE_AND_VERSION);
   title->setI18N();
+  grid->addChildInCell(title, 2, 1, CENTER);
+
   Label* subtitle = new Label("Animated sprite editor & pixel art tool");
   subtitle->setI18N();
+  grid->addChildInCell(subtitle, 2, 1, CENTER);
+
+  grid->addChildInCell(makeTextStrip(i18n("A {0:free and open source} fork of {1:Aseprite}"), {
+    "https://github.com/LibreSprite/LibreSprite/blob/master/LICENSE.txt",
+    "https://www.aseprite.org/"
+  }), 2, 1, CENTER);
+
   Separator* authors_separator1 = new Separator("Authors:", HORIZONTAL | TOP);
   authors_separator1->setI18N();
+  grid->addChildInCell(authors_separator1, 2, 1, 0);
+
+  grid->addChildInCell(makeTextStrip(i18n("*{0:Felipe Manga}, {1:Mauricio Ordoñez} -Maintainers"), {
+    "https://github.com/felipemanga/",
+    "https://github.com/maujin111/"
+  }), 2, 1, 0);
+  grid->addChildInCell(makeTextStrip(i18n("*{0:David Capello} -Original Aseprite program"), {
+    "https://davidcapello.com/"
+  }), 2, 1, 0);
+  grid->addChildInCell(makeTextStrip(i18n("*{0:Ilija Melentijevic} -Default skin & graphics introduced in v0.8"), {
+    "https://ilkke.blogspot.com/"
+  }), 2, 1, 0);
+  grid->addChildInCell(makeTextStrip(i18n("*{0:Contributors on GitHub}"), {
+    WEBSITE_CONTRIBUTORS
+  }), 2, 1, 0);
+
   Separator* authors_separator2 = new Separator("", HORIZONTAL);
-  authors_separator2->setI18N();
-  Label *author1 = new LinkLabel("http://davidcapello.com/", "David Capello");
-  author1->setI18N();
-  Label *author1_desc = new Label("- Lead developer, graphics & maintainer");
-  author1_desc->setI18N();
-  Label *author2 = new LinkLabel("http://ilkke.blogspot.com/", "Ilija Melentijevic");
-  author2->setI18N();
-  Label *author2_desc = new Label("- Default skin & graphics introduced in v0.8");
-  author2_desc->setI18N();
-  Label *author3 = new LinkLabel(WEBSITE_CONTRIBUTORS, "Contributors");
-  author3->setI18N();
-  Box* bottom_box1 = new Box(HORIZONTAL);
-  Box* bottom_box2 = new Box(HORIZONTAL);
-  Box* bottom_box3 = new Box(HORIZONTAL);
+  grid->addChildInCell(authors_separator2, 2, 1, 0);
+
   Label* copyright = new Label(COPYRIGHT);
+  grid->addChildInCell(copyright, 2, 1, 0);
+
   Label* website = new LinkLabel(WEBSITE);
+  grid->addChildInCell(website, 2, 1, 0);
+
+  Box* bottom_box = new Box(HORIZONTAL);
+  grid->addChildInCell(bottom_box, 2, 1, 0);
+  Box* bottom_box_left = new Box(HORIZONTAL);
+  bottom_box_left->setExpansive(true);
+  bottom_box->addChild(bottom_box_left);
   Button* close_button = new Button("&Close");
   close_button->setI18N();
-
-  grid->addChildInCell(title, 2, 1, 0);
-  grid->addChildInCell(subtitle, 2, 1, 0);
-  grid->addChildInCell(authors_separator1, 2, 1, 0);
-  grid->addChildInCell(author1, 1, 1, 0);
-  grid->addChildInCell(author1_desc, 1, 1, 0);
-  grid->addChildInCell(author2, 1, 1, 0);
-  grid->addChildInCell(author2_desc, 1, 1, 0);
-  grid->addChildInCell(author3, 2, 1, 0);
-  grid->addChildInCell(authors_separator2, 2, 1, 0);
-  grid->addChildInCell(copyright, 2, 1, 0);
-  grid->addChildInCell(website, 2, 1, 0);
-  grid->addChildInCell(bottom_box1, 2, 1, 0);
-
   close_button->setFocusMagnet(true);
-
-  bottom_box2->setExpansive(true);
-  bottom_box3->setExpansive(true);
-
-  bottom_box1->addChild(bottom_box2);
-  bottom_box1->addChild(close_button);
-  bottom_box1->addChild(bottom_box3);
-
-  box1->addChild(grid);
-  window->addChild(box1);
+  bottom_box->addChild(close_button);
+  Box* bottom_box_right = new Box(HORIZONTAL);
+  bottom_box_right->setExpansive(true);
+  bottom_box->addChild(bottom_box_right);
 
   close_button->setBorder(
     gfx::Border(
@@ -100,6 +113,75 @@ void AboutCommand::onExecute(Context* context)
   close_button->Click.connect(base::Bind<void>(&Window::closeWindow, window.get(), close_button));
 
   window->openWindowInForeground();
+}
+
+/**
+  Create inline text strip with clickable links.
+  Format is `{Index of link:Text in link} Non-interactive text outside braces`
+  We do this because the order of text in a sentence is not guaranteed to be consistent between languages
+  (e.g. `A {0:free and open source} fork of {1:Aseprite}` -> `{1:Aseprite}の{0:無料かつオープンソース}フォーク`)
+*/
+Box* AboutCommand::makeTextStrip(const std::string &directive, const std::vector<std::string> &links) {
+  Box* box = new Box(HORIZONTAL);
+  box->setChildSpacing(-1);
+  std::string currentText = "";
+  int linkIndex = 0;
+  int dirLength = directive.length();
+  bool isParsingIndex = false;
+
+  for (int i = 0; i < dirLength; i++) {
+    char currentChar = directive[i];
+    if (isParsingIndex) {
+      // ':' = End of index number
+      if (currentChar == ':') {
+        isParsingIndex = false;
+      } else {
+        // Append digit to index
+        ASSERT(currentChar >= '0' && currentChar <= '9');
+        linkIndex = linkIndex * 10 + (currentChar - '0');
+      }
+    } else switch (currentChar) {
+
+      // '\' = Escape character
+      case '\\':
+        i++;
+        currentText.push_back(directive[i]);
+        break;
+
+      // '{' = Beginning of link directive
+      case '{':
+        if (!currentText.empty()) {
+          Label* label = new Label(currentText);
+          box->addChild(label);
+          currentText.clear();
+        }
+        linkIndex = 0;
+        isParsingIndex = true;
+        break;
+
+      // '}' = End of link directive
+      case '}':
+        if (!currentText.empty()) {
+          LinkLabel* label = new LinkLabel(links[linkIndex], currentText);
+          box->addChild(label);
+          currentText.clear();
+        }
+        break;
+      
+      // Any other character = Append character to string
+      default:
+        currentText.push_back(currentChar);
+    }
+  }
+  
+  // Add leftover text
+  if (!currentText.empty()) {
+    Label* label = new Label(currentText);
+    box->addChild(label);
+    currentText.clear();
+  }
+
+  return box;
 }
 
 Command* CommandFactory::createAboutCommand()
